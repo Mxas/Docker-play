@@ -1,0 +1,14 @@
+version: "2"
+
+services:
+  elasticsearch:
+    image: elasticsearch
+    ports:
+    - 9200:9200
+  cerebro:
+    image: dylanmei/cerebro
+    ports:
+    - 9000:9000
+    command:
+    - bin/cerebro
+    - -Dhosts.0.host=http://elasticsearch:9200
