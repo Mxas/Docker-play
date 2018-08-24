@@ -48,12 +48,15 @@ services:
         ports:
             - "8888:80"
     cerebro:
-        image: yannart/cerebro:0.7.3
+        image: dylanmei/cerebro
         depends_on:
           - es
         ports:
             - "9000:9000"
         container_name: cerebro
+        command:
+          - bin/cerebro
+          - -Dhosts.0.host=http://elasticsearch:9200
     redis:
         image: redis
         ports:
