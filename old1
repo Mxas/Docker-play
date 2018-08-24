@@ -1,0 +1,95 @@
+version: "2"
+services:
+    tpm-db-server:
+        image: mysql:5.6
+        ports:
+            - "3306:3306"
+        volumes:
+            - ghx-tpm:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=mysql
+            - MYSQL_DATABASE=tpm
+            - MYSQL_USER=egxapp
+            - MYSQL_PASSWORD=password
+        container_name: tpm-mysql-serve
+    mysql-workbench:
+        image: jdecool/mysql-workbench
+        volumes:
+            - ghx-mysql-workbench-data:/root/.mysql/workbench
+            - /tmp/.X11-unix:/tmp/.X11-unix
+        environment:
+            - DISPLAY=unix$DISPLAY
+        network_mode: "host"
+        container_name: mysql-workbench
+    mongo:
+        image: mongo:3.6.3
+        ports:
+            - "27017:27017"
+        volumes:
+            - ghx-mongodata:/data/db
+        container_name: mongo-db
+    es:
+        image: elasticsearch:5.6.8
+        ports:
+            - "9200:9200"
+        volumes:
+            - ghx-esdata:/usr/share/elasticsearch/data
+        environment:
+            - "cluster.name=applogs"
+            - "discovery.zen.ping.unicase.hosts=localhost"
+        container_name: elasticsearch
+    kopf:
+        image: lmenezes/elasticsearch-kopf
+        depends_on:
+          - es
+        environment:
+          - KOPF_SERVER_NAME=dockerhost
+          - KOPF_ES_SERVERS=es:9200
+        ports:
+            - "8888:80"
+    cerebro:
+        image: yannart/cerebro:0.7.3
+        depends_on:
+          - es
+        ports:
+            - "9000:9000"
+        container_name: cerebro
+    redis:
+        image: redis
+        ports:
+            - "6379:6379"
+        command: ["redis-server", "--appendonly", "yes"]
+        volumes:
+            - ghx-redis-data:/data
+        container_name: redis
+volumes:
+    ghx-tpm:
+    ghx-mysql-workbench-data:
+    ghx-mongodata:
+    ghx-esconfig:
+    ghx-esdata:
+    ghx-redis-data:
+
+## Standalone helpers:
+
+## MYSQL
+## docker run -d --name tpm-mysql-server -p 3306:3306 -e MYSQL_ROOT_PASSWORD=mysql -e MYSQL_DATABASE=tpm -e MYSQL_USER=egxapp -e MYSQL_PASSWORD=egxpass -v ghx-tpm:/var/lib/mysql mysql:5.6
+## docker run -it --rm --name mysql-workbench -e DISPLAY=unix$DISPLAY -v ghx-mysql-workbench-data:/root/.mysql/workbench -v /tmp/.X11-unix:/tmp/.X11-unix jdecool/mysql-workbench
+
+## MongoDB
+## docker run -d -it --rm --name mongo-db -p 27017:27017 -v ghx-mongodata:/data/db mongo:3.6.3
+
+## ES
+## docker run -it --rm --name elasticsearch -p 9200:9200  -e network.host=0.0.0.0 -e cluster.name=applogs -e node.name=local-node -e discovery.zen.ping.multicast.enabled=false -e discovery.zen.ping.unicase.hosts=["localhost"] -v ghx-esdata:/usr/share/elasticsearch/data elasticsearch:5.6.8 
+## docker run -d -it --rm --name cerebro -p 9000:9000 yannart/cerebro:0.7.3
+
+## Redis
+## docker run -d -it --rm --name redis -d --rm -p 6379:6379 -v ghx-redis-data:/data redis redis-server --appendonly yes
+
+## after stopping clear data
+## docker ps -aq --no-trunc -f status=exited | xargs docker rm
+## docker volume prune
+
+# http://localhost:9000/#/connect
+# http://localhost:8888/#!/nodes
+# http://localhost:9200/?pretty
