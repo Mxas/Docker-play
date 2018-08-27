@@ -1,4 +1,4 @@
 
 
-sudo docker-compose stop
+sudo docker-compose -f ../docker-compose.yml stop
 
