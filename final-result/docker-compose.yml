@@ -1,0 +1,81 @@
+version: '2'
+services:
+
+  elastic_docker:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.6.8
+    environment:
+      - cluster.name=applog
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - node.attr.box_type=hot
+      - xpack.monitoring.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+  cerebro_docker:
+    image: dylanmei/cerebro
+    environment:
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+    ports:
+    - 9000:9000
+    command:
+    - bin/cerebro
+    - -Dhosts.0.host=http://elastic_docker:9200
+
+#    kopf:
+#        image: lmenezes/elasticsearch-kopf
+#        environment:
+#          - KOPF_SERVER_NAME=dockerhost
+#          - KOPF_ES_SERVERS=es:9200
+#        ports:
+#            - "8888:80"
+
+  mongo_docker:
+        image: mongo:3.6.3
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongo-data:/data/db
+
+  redis_docker:
+        image: redis
+        ports:
+            - "6379:6379"
+        command: ["redis-server", "--appendonly", "yes"]
+        volumes:
+            - redis-data:/data
+
+  mysql_docker:
+        image: mysql:5.6
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql-data:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=mysql
+            - MYSQL_DATABASE=tpm
+            - MYSQL_USER=egxapp
+            - MYSQL_PASSWORD=password
+
+#  mysql-workbench_docker:
+#        image: jdecool/mysql-workbench
+#        volumes:
+#            - mysql-workbench-data:/root/.mysql/workbench
+#            - /tmp/.X11-unix:/tmp/.X11-unix
+#        environment:
+#            - DISPLAY=unix$DISPLAY
+#        network_mode: "host"
+
+volumes:
+  es-data:
+  mongo-data: 
+  redis-data:
+  mysql-data:
+  mysql-workbench-data:
+

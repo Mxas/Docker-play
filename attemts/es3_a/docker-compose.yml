@@ -1,0 +1,11 @@
+version: "2"
+
+services:
+  elasticsearch-d01:
+    build: dockerfiles/ES/
+    container_name: elasticsearch-d01
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+

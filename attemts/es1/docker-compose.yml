@@ -1,0 +1,28 @@
+version: "2"
+
+services:
+  elasticsearch1:
+    build: es_m1
+    container_name: elasticsearch1
+    environment:
+      - es.cluster.name=mycluster
+      - cluster.name=applog
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+    - 9200:9200
+    - 9300:9300
+
+#  cerebro:
+#    image: dylanmei/cerebro
+#    ports:
+#    - 9000:9000
+#    command:
+#    - bin/cerebro
+#    - -Dhosts.0.host=http://elasticsearch:9200
+
+volumes:
+  esdata1:
+    driver: local
