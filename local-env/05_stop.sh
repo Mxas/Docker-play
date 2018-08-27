@@ -1,0 +1,4 @@
+
+
+sudo docker-compose stop
+
