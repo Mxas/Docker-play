@@ -1,4 +1,4 @@
-mc version: '2'
+version: '2'
 services:
 
   elastic_docker_es6:
