@@ -1,0 +1,127 @@
+version: '2'
+services:
+
+  elastic_docker_es7:
+    container_name: elastic_docker_es7
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
+    environment:
+      - cluster.name=applogs
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - node.attr.box_type=hot
+      - xpack.monitoring.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - path.repo=/usr/share/elasticsearch/data/repo
+      - path.data=/usr/share/elasticsearch/data
+     
+    ports:
+      - 9200:9200
+      - 9300:9300
+      
+    volumes:
+      - es-config-es7:/usr/share/elasticsearch/config
+      - es-data-es7:/usr/share/elasticsearch/data
+      - es-repo-es7:/usr/share/elasticsearch/data/repo
+      - es-plugins-es7:/usr/share/elasticsearch/plugins
+      - es-templates-es7:/usr/share/elastic_templates
+
+    networks:
+      - default
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.1
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_URL=http://elastic_docker_es7:9200
+      - SERVER_NAME=my-kibana
+      - XPACK_SECURITY_ENABLED=true
+      - PATH_DATA=/usr/share/kibana/data
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - kibana-config:/usr/share/kibana/config
+    links:
+      - elastic_docker_es7:elastic_docker_es7
+    depends_on:
+      - elastic_docker_es7
+
+    networks:
+      - default
+
+
+  cerebro_docker:
+    container_name: cerebro_docker
+    image: lmenezes/cerebro:0.8.3
+    environment:
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+    ports:
+      - 9000:9000
+    command:
+      - -Dhosts.0.host=http://elastic_docker_es7:9200
+
+    networks:
+      - default
+
+  mongo_docker:
+    container_name: mongo_docker
+    image: mongo:4.0.5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/dbdev
+
+    networks:
+      - default
+
+  redis_docker:
+    container_name: redis_docker
+    image: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+          - redis-data:/data
+
+    networks:
+      - default
+
+  mysql_docker:
+    container_name: mysql_docker
+    image: mysql:5.7.24
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8
+                 --collation-server=utf8_general_ci
+                 --lower-case-table-names=0 
+                 --sql-mode="NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - mysql-update:/usr/share/mysql_update
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql
+      - MYSQL_DATABASE=db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+
+    networks:
+      - default
+
+volumes:
+  es-data-es7:
+  es-repo-es7:
+  es-plugins-es7:
+  es-templates-es7:
+  es-config-es7:
+  kibana-data:
+  kibana-config:
+  redis-data:
+  mongo-data: 
+  mysql-data:
+  mysql-update:
+
+networks:
+   default:
+
